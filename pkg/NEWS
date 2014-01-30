@@ -1,0 +1,19 @@
+﻿Version 0.2 (Developed 2014-01-14 through 2014-02-?)
+------------------------------------------------------------------------------
+Updates:
+* New Mozilla SSL Certifcation Bundles released on cURL (released 2013-12-05; http://curl.haxx.se/ca/cacert.pem)
+
+Version 0.1 (Developed 2013-11-26 through 2014-01-14)
+------------------------------------------------------------------------------
+New Features:
+* Introduces redcap_read and redcap_read_batch with documentation
+* SSL verify peer by default, using cert file included in package
+* Initial submission to GitHub
+
+Enhancements:
+* redcap_read takes parameter for raw_or_label (Thanks Rollie Parrish #3)
+* redcap_read takes parameter for export_data_access_groups (Thanks Rollie Parrish #4)
+
+GitHub Commits
+------------------------------------------------------------------------------
+For a detailed change log, please see https://github.com/OuhscBbmc/REDCapR/commits/master
