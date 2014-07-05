@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE))
-require(devtools)
+# require(devtools)
 options(device = "windows") #http://support.rstudio.org/help/discussions/problems/80-error-in-function-only-one-rstudio-graphics-device-is-permitted
 
 devtools::document()
@@ -23,3 +23,5 @@ devtools::build_vignettes()
 # devtools::build_win(version="R-devel") #CRAN submission policies encourage the development version
 devtools::revdep_check(pkg="REDCapR", recursive=TRUE)
 # devtools::release(check=FALSE) #Careful, the last question ultimately uploads it to CRAN, where you can't delete/reverse your decision.
+
+# devtools::install_github("wibeasley/roxygen")
