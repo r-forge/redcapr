@@ -1,5 +1,6 @@
 ﻿Version 0.3 (Developed 2014-07-03 through ?)
 ------------------------------------------------------------------------------
+
 New Features:
 * Relies on the `httr` package, which provides benefits like the status code message can be captured (eg, 200-OK, 403-Forbidden, 404-NotFound).  See http://cran.r-project.org/web/packages/httr/.
 
