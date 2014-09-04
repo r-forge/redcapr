@@ -11,8 +11,8 @@ export_data_access_groups_string <- "true"
 records_collapsed <- "1,2,5"
 fields_collapsed <- NULL
 
-
-curl_options <- RCurl::curlOptions(cainfo = "./inst/ssl_certs/mozilla_2014_04_22.crt")
+config_options <- list(cainfo = "./inst/ssl_certs/mozilla_ca_root.crt")
+# config_options <- RCurl::curlOptions(ssl.verifypeer = FALSE)
 
 r <- httr::POST(
   url = redcap_uri
@@ -26,8 +26,7 @@ r <- httr::POST(
     , records = records_collapsed
     , fields = fields_collapsed
   ),
-  #, .opts = RCurl::curlOptions(ssl.verifypeer = FALSE)
-  , .opts = curl_options
+  , .opts = config_options
 )
 r$status_code
 r$headers$status
@@ -75,7 +74,7 @@ dsToWrite <- structure(list(record_id = 1:5, first_name = c("Nutmeg", "Tumtum",
   -5L))
 dsToWrite$age <- NULL; dsToWrite$bmi <- NULL #Drop the calculated fields
 # dsToWrite <- dsToWrite[1:3, ]
-# result <- REDCapR:::redcap_write_oneshot(ds=dsToWrite, redcap_uri="https://bbmc.ouhsc.edu/redcap/api/", token = "9A81268476645C4E5F03428B8AC3AA7B")
+# result <- REDCapR::redcap_write_oneshot(ds=dsToWrite, redcap_uri="https://bbmc.ouhsc.edu/redcap/api/", token = "9A81268476645C4E5F03428B8AC3AA7B")
 
 con <-  base::textConnection(object='csvElements', open='w', local=TRUE)
 write.csv(dsToWrite, con, row.names = FALSE, na="")  
@@ -105,7 +104,7 @@ post_body <- list(
 result <- httr::POST(
   url = redcap_uri,
   body = post_body,
-  .opts = curl_options #RCurl::curlOptions(ssl.verifypeer = FALSE)
+  .opts = config_options
 )
 result
 

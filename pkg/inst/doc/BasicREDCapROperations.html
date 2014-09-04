@@ -5,6 +5,18 @@
 
 <title>Basic REDCapR Operations</title>
 
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
 <!-- Styles for R syntax highlighter -->
 <style type="text/css">
    pre .operator,
@@ -45,9 +57,6 @@ var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/<
 hljs.initHighlightingOnLoad();
 </script>
 
-<!-- MathJax scripts -->
-<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
 
 
 <style type="text/css">
@@ -99,7 +108,9 @@ a:visited {
 pre, img {
   max-width: 100%;
 }
-
+pre {
+  overflow-x: auto;
+}
 pre code {
    display: block; padding: 0.5em;
 }
@@ -195,6 +206,8 @@ hr {
 %\VignetteIndexEntry{Basic REDCapR Operations}
 -->
 
+<!-- rmarkdown v1 -->
+
 <h1>Basic REDCapR Operations</h1>
 
 <p>This vignette covers the the basic functions exposed by the <a href="https://github.com/OuhscCcanMiechvEvaluation/REDCapR"><code>REDCapR</code></a> package which allow you to interact with <a href="http://www.project-redcap.org/">REDCap</a> through its API.</p>
@@ -202,6 +215,9 @@ hr {
 <h2>Reading REDCap Data</h2>
 
 <p>The function <code>redcap_read_oneshot</code> uses the <a href="http://cran.r-project.org/web/packages/RCurl/index.html"><code>RCurl</code></a> package to call the REDCap API.</p>
+
+<pre><code>## Loading required package: knitr
+</code></pre>
 
 <h3>Set project-wide values.</h3>
 
@@ -222,7 +238,7 @@ token &lt;- &quot;9A81268476645C4E5F03428B8AC3AA7B&quot;
 ds_all_rows_all_fields &lt;- redcap_read_oneshot(redcap_uri=uri, token=token)$data
 </code></pre>
 
-<pre><code>5 records and 16 columns were read from REDCap in 0.43 seconds.  The http status code and message were 200: OK.
+<pre><code>5 records and 16 columns were read from REDCap in 0.67 seconds.  The http status code was 200.
 </code></pre>
 
 <pre><code class="r">ds_all_rows_all_fields #Inspect the returned dataset
@@ -269,7 +285,7 @@ ds_some_rows_v1 &lt;- redcap_read_oneshot(
 )$data
 </code></pre>
 
-<pre><code>2 records and 16 columns were read from REDCap in 0.26 seconds.  The http status code and message were 200: OK.
+<pre><code>2 records and 16 columns were read from REDCap in 0.38 seconds.  The http status code was 200.
 </code></pre>
 
 <pre><code class="r">#Return only records with IDs of 1 and 3 (alternate way)
@@ -281,7 +297,7 @@ ds_some_rows_v2 &lt;- redcap_read_oneshot(
 )$data
 </code></pre>
 
-<pre><code>2 records and 16 columns were read from REDCap in 0.25 seconds.  The http status code and message were 200: OK.
+<pre><code>2 records and 16 columns were read from REDCap in 0.31 seconds.  The http status code was 200.
 </code></pre>
 
 <pre><code class="r">ds_some_rows_v2 #Inspect the returned dataset
@@ -308,7 +324,7 @@ ds_some_fields_v1 &lt;- redcap_read_oneshot(
 )$data
 </code></pre>
 
-<pre><code>5 records and 3 columns were read from REDCap in 0.24 seconds.  The http status code and message were 200: OK.
+<pre><code>5 records and 3 columns were read from REDCap in 0.35 seconds.  The http status code was 200.
 </code></pre>
 
 <pre><code class="r">#Return only the fields recordid, first_name, and age (alternate way)
@@ -320,7 +336,7 @@ ds_some_fields_v2 &lt;- redcap_read_oneshot(
 )$data
 </code></pre>
 
-<pre><code>5 records and 3 columns were read from REDCap in 1.45 seconds.  The http status code and message were 200: OK.
+<pre><code>5 records and 3 columns were read from REDCap in 0.34 seconds.  The http status code was 200.
 </code></pre>
 
 <pre><code class="r">ds_some_fields_v2 #Inspect the returned dataset
@@ -340,12 +356,12 @@ ds_some_fields_v2 &lt;- redcap_read_oneshot(
 
 <ol>
 <li>The <code>data</code> object has the <code>data.frame</code>, as in the previous examples.</li>
-<li>The <code>raw_text</code> returned by the REDCap API. This might display helpful error messages, in the event something went wrong.</li>
+<li>The <code>success</code> boolean value indicates if <code>redcap_read_oneshot</code> believes the operation completed as intended.</li>
+<li>The <code>status_codes</code> is a collection of <a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes">http status codes</a>, separated by semicolons.  There is one code for each batch attempted.</li>
+<li>The <code>outcome_messages</code>: A collection of human readable strings indicating the operations&#39; semicolons.  There is one code for each batch attempted.  In an unsuccessful operation, it should contain diagnostic information.</li>
 <li>The <code>records_collapsed</code> field passed to the API.  This shows which record subsets, if any, were requested.</li>
 <li>The <code>fields_collapsed</code> fields passed to the API.  This shows which field subsets, if any, were requested.</li>
-<li>The <code>elapsed_seconds</code> measures the duration of the call.</li>
-<li>The <code>outcome_message</code> has the number of rows and columns read in a successful operation.  In an unsuccessful operation, it should contain diagnostic information.</li>
-<li>The <code>success</code> boolean value indicates if <code>redcap_read_oneshot</code> believes the operation completed as intended.</li>
+<li>The <code>elapsed_seconds</code> measures the duration of the call. </li>
 </ol>
 
 <pre><code class="r">#Return only the fields recordid, first_name, and age
@@ -356,7 +372,7 @@ all_information &lt;- redcap_read_oneshot(
 )
 </code></pre>
 
-<pre><code>5 records and 3 columns were read from REDCap in 0.24 seconds.  The http status code and message were 200: OK.
+<pre><code>5 records and 3 columns were read from REDCap in 0.39 seconds.  The http status code was 200.
 </code></pre>
 
 <pre><code class="r">all_information #Inspect the additional information
@@ -376,20 +392,17 @@ $success
 $status_code
 [1] 200
 
-$status_message
-[1] &quot;OK&quot;
-
 $outcome_message
-[1] &quot;5 records and 3 columns were read from REDCap in 0.24 seconds.  The http status code and message were 200: OK.&quot;
+[1] &quot;5 records and 3 columns were read from REDCap in 0.39 seconds.  The http status code was 200.&quot;
 
 $records_collapsed
-NULL
+[1] &quot;&quot;
 
 $fields_collapsed
 [1] &quot;recordid,first_name,age&quot;
 
 $elapsed_seconds
-[1] 0.2449
+[1] 0.3884
 
 $raw_text
 [1] &quot;&quot;
@@ -399,10 +412,10 @@ $raw_text
 
 <p>For the sake of documentation and reproducibility, the current vignette was build on a system using the following software.</p>
 
-<pre><code>Report created by Will at 2014-07-12, 13:32:10 -0500
+<pre><code>Report created by Will at 2014-09-03, 21:33:08 -0500
 </code></pre>
 
-<pre><code>R version 3.1.1 Patched (2014-07-10 r66124)
+<pre><code>R version 3.1.1 Patched (2014-08-27 r66482)
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 locale:
@@ -413,13 +426,12 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] knitr_1.6           REDCapR_0.3-22      testthat_0.8.1.0.99
+[1] knitr_1.6           REDCapR_0.4-6       testthat_0.8.1.0.99
 
 loaded via a namespace (and not attached):
- [1] codetools_0.2-8   devtools_1.5      digest_0.6.4      evaluate_0.5.5    formatR_0.10      htmltools_0.2.4  
- [7] httr_0.3          markdown_0.7      memoise_0.2.1     mime_0.1.1        parallel_3.1.1    plyr_1.8.1       
-[13] Rcpp_0.11.2       RCurl_1.95-4.1    rmarkdown_0.2.49  roxygen2_4.0.1.99 stringr_0.6.2     tools_3.1.1      
-[19] whisker_0.3-2     yaml_2.1.13      
+ [1] codetools_0.2-9 devtools_1.5    digest_0.6.4    evaluate_0.5.5  formatR_1.0     httr_0.5        memoise_0.2.1  
+ [8] parallel_3.1.1  plyr_1.8.1      Rcpp_0.11.2     RCurl_1.95-4.3  roxygen2_4.0.2  stringr_0.6.2   tools_3.1.1    
+[15] whisker_0.3-2  
 </code></pre>
 
 </body>

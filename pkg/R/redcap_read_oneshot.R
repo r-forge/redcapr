@@ -1,7 +1,7 @@
 #' @name redcap_read_oneshot
 #' @export redcap_read_oneshot
 #' 
-#' @title Read records from a REDCap project.
+#' @title Read/Export records from a REDCap project.
 #'  
 #' @description This function uses REDCap's \href{https://iwg.devguard.com/trac/redcap/wiki/ApiExamples}{API}
 #' to select and return data.
@@ -21,7 +21,6 @@
 #'  \item \code{data}: An R \code{data.frame} of the desired records and columns.
 #'  \item \code{success}: A boolean value indicating if the operation was apparently successful.
 #'  \item \code{status_code}: The \href{http://en.wikipedia.org/wiki/List_of_HTTP_status_codes}{http status code} of the operation.
-#'  \item \code{status_message}: The message associated with the \href{http://en.wikipedia.org/wiki/List_of_HTTP_status_codes}{http status code}.
 #'  \item \code{outcome_message}: A human readable string indicating the operation's outcome.
 #'  \item \code{records_collapsed}: The desired records IDs, collapsed into a single string, separated by commas.
 #'  \item \code{fields_collapsed}: The desired field names, collapsed into a single string, separated by commas.
@@ -68,8 +67,8 @@
 #' }
 #' 
 
-redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collapsed=NULL, 
-                         fields=NULL, fields_collapsed=NULL, 
+redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collapsed="", 
+                         fields=NULL, fields_collapsed="", 
                          export_data_access_groups=FALSE,
                          raw_or_label='raw', verbose=TRUE, cert_location=NULL ) {
   #TODO: NULL verbose parameter pulls from getOption("verbose")
@@ -86,22 +85,27 @@ redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collap
   if( missing(token) )
     stop("The required parameter `token` was missing from the call to `redcap_read_oneshot()`.")
   
-  if( missing(records_collapsed) & !missing(records) )
-    records_collapsed <- paste0(records, collapse=",")
+  # if( missing(records_collapsed) & !missing(records) )
+  #   records_collapsed <- paste0(records, collapse=",")
+  # if( missing(fields_collapsed) & !missing(fields) )
+  #   fields_collapsed <- paste0(fields, collapse=",")
   
-  if( missing(fields_collapsed) & !missing(fields) )
-    fields_collapsed <- paste0(fields, collapse=",")
+  if( nchar(records_collapsed)==0 )
+    records_collapsed <- ifelse(is.null(records), "", paste0(records, collapse=",")) #This is an empty string if `records` is NULL.
+  if( nchar(fields_collapsed)==0 )
+    fields_collapsed <- ifelse(is.null(fields), "", paste0(fields, collapse=",")) #This is an empty string if `fields` is NULL.
   
   export_data_access_groups_string <- ifelse(export_data_access_groups, "true", "false")
   
   if( missing( cert_location ) | is.null(cert_location) | (length(cert_location)==0)) 
-    cert_location <- file.path(devtools::inst("REDCapR"), "ssl_certs/mozilla_2014_04_22.crt")
+    cert_location <- file.path(devtools::inst("REDCapR"), "ssl_certs/mozilla_ca_root.crt")
   # curl_options <- RCurl::curlOptions(ssl.verifypeer=FALSE)
 
   if( !base::file.exists(cert_location) )
       stop(paste0("The file specified by `cert_location`, (", cert_location, ") could not be found."))
   
-  curl_options <- RCurl::curlOptions(cainfo=cert_location, sslversion=3)
+  #curl_options <- RCurl::curlOptions(cainfo=cert_location, sslversion=3)
+  config_options <- list(cainfo=cert_location, sslversion=3)
   
   # raw_text <- RCurl::postForm(
   #   uri = redcap_uri
@@ -129,11 +133,11 @@ redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collap
   result <- httr::POST(
     url = redcap_uri,
     body = post_body,
-    config = curl_options #RCurl::curlOptions(ssl.verifypeer=FALSE)
+    config = config_options
   )
 
   status_code <- result$status
-  status_message <- result$headers$statusmessage
+#   status_message <- result$headers$statusmessage
   success <- (status_code==200L)
   
   raw_text <- httr::content(result, "text")  
@@ -150,8 +154,8 @@ redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collap
                              " records and ",  
                              format(length(ds), big.mark=",", scientific=FALSE, trim=TRUE), 
                              " columns were read from REDCap in ", 
-                             round(elapsed_seconds, 2), " seconds.  The http status code and message were ",
-                             status_code, ": ", status_message, ".")
+                             round(elapsed_seconds, 2), " seconds.  The http status code was ",
+                             status_code, ".")
     
     #If an operation is successful, the `raw_text` is no longer returned to save RAM.  It's not really necessary with httr's status message exposed.
     raw_text <- "" 
@@ -169,7 +173,7 @@ redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collap
     data = ds, 
     success = success,
     status_code = status_code,
-    status_message = status_message, 
+    # status_message = status_message, 
     outcome_message = outcome_message,
     records_collapsed = records_collapsed, 
     fields_collapsed = fields_collapsed,
@@ -177,19 +181,4 @@ redcap_read_oneshot <- function( redcap_uri, token, records=NULL, records_collap
     raw_text = raw_text
   ) )
 }
-
-# curl_options <- RCurl::curlOptions(cainfo = cert_location)
-
-# raw_text <- RCurl::postForm(
-#   uri = "https://bbmc.ouhsc.edu/redcap/api/"
-#   , token = "9A81268476645C4E5F03428B8AC3AA7B"
-#   , content = 'record'
-# #   , format = 'csv'
-# #   , type = 'flat'
-#   #, rawOrLabel = raw_or_label
-#   #, exportDataAccessGroups = export_data_access_groups_string
-#   #, records = records_collapsed
-#   #, fields = fields_collapsed
-#   , .opts = RCurl::curlOptions(ssl.verifypeer = FALSE)
-# )
 

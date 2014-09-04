@@ -26,9 +26,8 @@
 #' \enumerate{
 #'  \item \code{data}: An R \code{data.frame} of the desired records and columns.
 #'  \item \code{success}: A boolean value indicating if the operation was apparently successful.
-#'  \item \code{status_codes}: A collection of \href{http://en.wikipedia.org/wiki/List_of_HTTP_status_codes}{http status codes}, separated by semicolons.
-#'  \item \code{status_messages}: A collection of messages associated with the \href{http://en.wikipedia.org/wiki/List_of_HTTP_status_codes}{http status code}, separated by semicolons.
-#'  \item \code{outcome_messages}: A collection of human readable strings indicating the operations' semicolons
+#'  \item \code{status_codes}: A collection of \href{http://en.wikipedia.org/wiki/List_of_HTTP_status_codes}{http status codes}, separated by semicolons.  There is one code for each batch attempted.
+#'  \item \code{outcome_messages}: A collection of human readable strings indicating the operations' semicolons.  There is one code for each batch attempted.  In an unsuccessful operation, it should contain diagnostic information.
 #'  \item \code{records_collapsed}: The desired records IDs, collapsed into a single string, separated by commas.
 #'  \item \code{fields_collapsed}: The desired field names, collapsed into a single string, separated by commas.
 #'  \item \code{elapsed_seconds}: The duration of the function.
@@ -58,8 +57,8 @@
 #' 
 
 redcap_read <- function( batch_size=100L, interbatch_delay=0,
-                               redcap_uri, token, records=NULL, records_collapsed=NULL, 
-                               fields=NULL, fields_collapsed=NULL, 
+                               redcap_uri, token, records=NULL, records_collapsed="", 
+                               fields=NULL, fields_collapsed="", 
                                export_data_access_groups = FALSE,
                                raw_or_label = 'raw',
                                verbose=TRUE, cert_location=NULL, id_position=1L ) {  
@@ -69,36 +68,41 @@ redcap_read <- function( batch_size=100L, interbatch_delay=0,
   if( missing(token) )
     stop("The required parameter `token` was missing from the call to `redcap_read()`.")
   
-  if( !missing(records) & (is.null(records_collapsed) | missing(records_collapsed)) )
-    records_collapsed <- paste0(records, collapse=",")
+  # if( !missing(records) & (is.null(records_collapsed) | missing(records_collapsed)) )
+  #   records_collapsed <- paste0(records, collapse=",")
+  # if( !missing(fields) & (is.null(fields_collapsed) | missing(fields_collapsed)) )
+  #   fields_collapsed <- paste0(fields, collapse=",")
   
-  if( !missing(fields) & (is.null(fields_collapsed) | missing(fields_collapsed)) )
-    fields_collapsed <- paste0(fields, collapse=",")
+  if( nchar(records_collapsed)==0 )
+    records_collapsed <- ifelse(is.null(records), "", paste0(records, collapse=",")) #This is an empty string if `records` is NULL.
+  if( nchar(fields_collapsed)==0 )
+    fields_collapsed <- ifelse(is.null(fields), "", paste0(fields, collapse=",")) #This is an empty string if `fields` is NULL.
   
   #   export_data_access_groups_string <- ifelse(export_data_access_groups, "true", "false")
-  #   
-  #   if( missing( cert_location ) | is.null(cert_location) ) 
-  #     cert_location <- file.path(devtools::inst("REDCapR"), "ssl_certs", "mozilla_2014_04_22.crt")
-  #   #     curl_options <- RCurl::curlOptions(ssl.verifypeer = FALSE)
-  #   
-  #   if( !base::file.exists(cert_location) )
-  #     stop(paste0("The file specified by `cert_location`, (", cert_location, ") could not be found."))
-  
+
   start_time <- Sys.time()
-  initial_call <- REDCapR::redcap_read_oneshot(redcap_uri=redcap_uri, token=token, records_collapsed=records_collapsed, fields_collapsed="nonexistant_field_name", verbose=verbose, cert_location=cert_location)
+  initial_call <- REDCapR::redcap_read_oneshot(
+    redcap_uri = redcap_uri, 
+    token = token, 
+    records_collapsed = records_collapsed,
+    fields_collapsed = "nonexistant_field_name", 
+    verbose = verbose, 
+    cert_location = cert_location
+  )
   
   ###
   ### Stop and return to the caller if the initial query failed.
   ###
   if( !initial_call$success ) {
-    status_message <- paste0("The initial call failed with the message: ", initial_call$status_message, ".")
-    elapsed_seconds <- as.numeric(difftime( Sys.time(), start_time, units="secs"))
+    outcome_message <- paste0("The initial call failed with the code: ", initial_call$status_code, ".")
+    elapsed_seconds <- as.numeric(difftime(Sys.time(), start_time, units="secs"))
     return( list(
       data = data.frame(), 
       records_collapsed = "failed in initial batch call", 
       fields_collapsed = "failed in initial batch call",
       elapsed_seconds = elapsed_seconds, 
-      status_message = status_message, 
+      status_code = initial_call$status_code,
+      outcome_message = outcome_message,
       success = initial_call$success
     ) )
   }
@@ -110,7 +114,7 @@ redcap_read <- function( batch_size=100L, interbatch_delay=0,
   ds_glossary <- REDCapR::create_batch_glossary(row_count=length(uniqueIDs), batch_size=batch_size)
   lst_batch <- NULL
   lst_status_code <- NULL
-  lst_status_message <- NULL
+  # lst_status_message <- NULL
   lst_outcome_message <- NULL
   success_combined <- TRUE
   
@@ -133,7 +137,7 @@ redcap_read <- function( batch_size=100L, interbatch_delay=0,
                                         cert_location = cert_location)
     
     lst_status_code[[i]] <- read_result$status_code
-    lst_status_message[[i]] <- read_result$status_message
+    # lst_status_message[[i]] <- read_result$status_message
     lst_outcome_message[[i]] <- read_result$outcome_message
     if( !read_result$success )
       stop("The `redcap_read()` call failed on iteration", i, ". Set the `verbose` parameter to TRUE and rerun for additional information.")
@@ -148,7 +152,7 @@ redcap_read <- function( batch_size=100L, interbatch_delay=0,
   
   elapsed_seconds <- as.numeric(difftime( Sys.time(), start_time, units="secs"))
   status_code_combined <- paste(lst_status_code, collapse="; ")
-  status_message_combined <- paste(lst_status_message, collapse="; ")
+  # status_message_combined <- paste(lst_status_message, collapse="; ")
   outcome_message_combined <- paste(lst_outcome_message, collapse="; ")
 #   status_message_overall <- paste0("\nAcross all batches,", 
 #                                    format(nrow(ds_stacked), big.mark = ",", scientific = FALSE, trim = TRUE), 
@@ -163,7 +167,7 @@ redcap_read <- function( batch_size=100L, interbatch_delay=0,
     data = ds_stacked,
     success = success_combined,
     status_codes = status_code_combined,
-    status_messages = status_message_combined,
+    # status_messages = status_message_combined,
     outcome_messages = outcome_message_combined,
     records_collapsed = records_collapsed,
     fields_collapsed = fields_collapsed,
