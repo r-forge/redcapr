@@ -34,7 +34,7 @@ ds_all_rows_all_fields <- redcap_read_oneshot(redcap_uri=uri, token=token)$data
 ```
 
 ```
-5 records and 16 columns were read from REDCap in 1.1 seconds.  The http status code was 200.
+5 records and 16 columns were read from REDCap in 1 seconds.  The http status code was 200.
 ```
 
 ```r
@@ -85,7 +85,7 @@ ds_some_rows_v1 <- redcap_read_oneshot(
 ```
 
 ```
-2 records and 16 columns were read from REDCap in 0.82 seconds.  The http status code was 200.
+2 records and 16 columns were read from REDCap in 0.33 seconds.  The http status code was 200.
 ```
 
 ```r
@@ -99,7 +99,7 @@ ds_some_rows_v2 <- redcap_read_oneshot(
 ```
 
 ```
-2 records and 16 columns were read from REDCap in 0.34 seconds.  The http status code was 200.
+2 records and 16 columns were read from REDCap in 0.31 seconds.  The http status code was 200.
 ```
 
 ```r
@@ -130,7 +130,7 @@ ds_some_fields_v1 <- redcap_read_oneshot(
 ```
 
 ```
-5 records and 3 columns were read from REDCap in 3.33 seconds.  The http status code was 200.
+5 records and 3 columns were read from REDCap in 0.29 seconds.  The http status code was 200.
 ```
 
 ```r
@@ -144,7 +144,7 @@ ds_some_fields_v2 <- redcap_read_oneshot(
 ```
 
 ```
-5 records and 3 columns were read from REDCap in 0.35 seconds.  The http status code was 200.
+5 records and 3 columns were read from REDCap in 0.3 seconds.  The http status code was 200.
 ```
 
 ```r
@@ -213,7 +213,7 @@ $fields_collapsed
 [1] "recordid,first_name,age"
 
 $elapsed_seconds
-[1] 0.2988
+[1] 0.3001
 
 $raw_text
 [1] ""
@@ -224,11 +224,11 @@ For the sake of documentation and reproducibility, the current vignette was buil
 
 
 ```
-Report created by Will at 2014-09-03, 21:33:26 -0500
+Report created by Will at 2014-09-05, 14:31:54 -0500
 ```
 
 ```
-R version 3.1.1 Patched (2014-08-27 r66482)
+R version 3.1.1 Patched (2014-09-03 r66517)
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 locale:
@@ -239,9 +239,8 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] REDCapR_0.4-06 knitr_1.6     
+[1] REDCapR_0.4-10 knitr_1.6     
 
 loaded via a namespace (and not attached):
- [1] devtools_1.5   digest_0.6.4   evaluate_0.5.5 formatR_1.0    httr_0.5       memoise_0.2.1  parallel_3.1.1
- [8] RCurl_1.95-4.3 stringr_0.6.2  tools_3.1.1    whisker_0.3-2 
+[1] evaluate_0.5.5 formatR_1.0    httr_0.5       RCurl_1.95-4.3 stringr_0.6.2  tools_3.1.1   
 ```
