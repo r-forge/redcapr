@@ -1,20 +1,17 @@
-#' @name redcap_download_file
-#' @export redcap_download_file
+#' @name redcap_upload_file_oneshot
+#' @export redcap_upload_file_oneshot
 #' 
-#' @title Download a file from a REDCap project record.
+#' @title Upload a file into to a REDCap project record.
 #'  
 #' @description This function uses REDCap's \href{https://iwg.devguard.com/trac/redcap/wiki/ApiExamples}{API}
 #' to upload a file
 #' 
-#' @param file_name The name of the file where the downloaded file is saved.
-#' 		     If empty the original name of the file will be used and saved in 
-#' 		     the default directory.  Optional. 
-#' @param dir The directory where the file is saved. By default current directory. Optional
-#' @param record The record id where the file is to be imported. Required
-#' @param field The name of the field where the file is saved in REDCap. Required
-#' @param event The name of the event where the file is saved in REDCap. Optional
+#' @param file_name The name of the relative or full file to be uploaded into the REDCap project.  Required.
 #' @param redcap_uri The URI (uniform resource identifier) of the REDCap project.  Required.
 #' @param token The user-specific string that serves as the password for a project.  Required.
+#' @param record The record ID where the file is to be imported. Required
+#' @param field The name of the field where the file is saved in REDCap. Required
+#' @param event The name of the event where the file is saved in REDCap. Optional
 #' @param verbose A boolean value indicating if \code{message}s should be printed to the R console during the operation.  Optional.
 #' @param cert_location  If present, this string should point to the location of the cert files required for SSL verification.  If the value is missing or NULL, the server's identity will be verified using a recent CA bundle from the \href{http://curl.haxx.se}{cURL website}.  See the details below. Optional.
 #' 
@@ -40,57 +37,70 @@
 #' The official \href{http://curl.haxx.se}{cURL site} discusses the process of using SSL to verify the server being connected to.
 #' 
 #' @examples
-#' \dontrun{  
+#' \dontrun{ 
+#' #Define some constants
 #' uri  <- "https://bbmc.ouhsc.edu/redcap/api/"
-#' token <- "D70F9ACD1EDD6F151C6EA78683944E98" #pid=213
-#' record <- 1
+#' token <- "D70F9ACD1EDD6F151C6EA78683944E98" #For the simple project (pid 213)
 #' field <- "mugshot"
-#' # event <- "" # only for longitudinal events
+#' event <- "" # only for longitudinal events
 #' 
-#' result_1 <- redcap_download_file(record=record, field=field, 
-#'                                  redcap_uri=uri, token=token)
-#' base::unlink("mugshot_1.jpg)
+#' #Upload a single image file.
+#' record <- 1
+#' file_path <- base::file.path(devtools::inst(name="REDCapR"), paste0("test_data/mugshot_1.jpg"))
 #' 
-#' (full_name <- base::tempfile(pattern="mugshot", fileext=".jpg"))
-#' result_2 <- redcap_download_file(file_name=full_name, record=record, field=field, 
-#'                                  redcap_uri=uri, token=token)
-#' base::unlink(full_name)
+#' redcap_upload_file_oneshot(file_name=file_path, redcap_uri=redcap_uri, token=token,
+#'                            record=record, field=field)
 #' 
-#' (relative_name <- "ssss.jpg")
-#' result_3 <- redcap_download_file(file_name=relative_name, record=record, field=field, 
-#'                                  redcap_uri=uri, token=token)
-#' base::unlink(relative_name)
+#' #Upload a collection of five images.
+#' records <- 1:5
+#' file_paths <- base::file.path(devtools::inst(name="REDCapR"), 
+#'                               paste0("test_data/mugshot_", records, ".jpg"))
+#' 
+#' for( i in seq_along(records) ) {
+#'   record <- records[i]
+#'   file_path <- file_paths[i]
+#'   redcap_upload_file_oneshot(file_name=file_path, redcap_uri=redcap_uri, token=token,
+#'                              record=record, field=field)
+#' } 
 #' }
 
-redcap_download_file <- function( file_name=NULL, dir=NULL, record, field, event="", redcap_uri, token, verbose=TRUE, cert_location=NULL ) {
+redcap_upload_file_oneshot <- function( file_name, record, redcap_uri, token, field, event="", verbose=TRUE, cert_location=NULL ) {
 	start_time <- Sys.time()
 	
+	if( missing(file_name) | is.null(file_name) )
+	  stop("The required parameter `file_name` was missing from the call to `redcap_upload_file_oneshot()`.")
+	
+	if( !base::file.exists(file_name) )
+	  stop("The file `", file_name, "` was not found at the specified path.")
+	
 	if( missing(redcap_uri) )
-		stop("The required parameter `redcap_uri` was missing from the call to `redcap_write_oneshot()`.")
+	  stop("The required parameter `redcap_uri` was missing from the call to `redcap_upload_file_oneshot()`.")
 	
 	if( missing(token) )
-		stop("The required parameter `token` was missing from the call to `redcap_write_oneshot()`.")     
+		stop("The required parameter `token` was missing from the call to `redcap_upload_file_oneshot()`.")     
 	
 	if( missing( cert_location ) | is.null(cert_location) ) 
-		cert_location <- system.file("cacert.pem", package = "httr")
+		cert_location <- system.file("cacert.pem", package="httr")
 	
 	if( !base::file.exists(cert_location) )
 		stop(paste0("The file specified by `cert_location`, (", cert_location, ") could not be found."))
 	
 	config_options <- list(cainfo=cert_location, sslversion=3)
-		
+  
+	if( verbose )
+	  message("Preparing to upload the file `", file_name, "`.")
+  
 	post_body <- list(
 		token = token,
 		content = 'file',
-		action = 'export',
+		action = 'import',
 		record = record,
 		field = field,
 		event = event,
+		file = httr::upload_file(path=file_name),
 		returnFormat = 'csv'  
 	)
 	
-  #This is the first of two important lines in the function.
-  #  It retrieves the information from the server and stores it in RAM.
 	result <- httr::POST(
 		url = redcap_uri,
 		body = post_body,
@@ -99,48 +109,24 @@ redcap_download_file <- function( file_name=NULL, dir=NULL, record, field, event
 	
 	status_code <- result$status_code
 	# status_message <- result$headers$statusmessage
-
-	elapsed_seconds <- as.numeric(difftime( Sys.time(), start_time,units="secs"))    
+	elapsed_seconds <- as.numeric(difftime(Sys.time(), start_time, units="secs"))    
 	
 	#isValidIDList <- grepl(pattern="^id\\n.{1,}", x=raw_text, perl=TRUE) #example: x="id\n5835\n5836\n5837\n5838\n5839"
 	success <- (status_code == 200L)
 	
 	if( success ) {
-    browser()
-		result_header <- result$headers$`content-type`
-    
-		if( missing(file_name) | is.null(file_name) ) {
-			#process the content-type to get the file name
-		  regex_matches <- regmatches(result_header, regexpr("name=.*", result_header))
-		  file_name <- gsub(pattern='(name=.)|(")', replacement="", x=regex_matches)
-		}
-		
-		if( missing(dir) & is.null(dir) ) {
-		  file_path <- file_name #Qualify the file with its full path.
-    } else {
-		  file_path <- file.path(dir, file_name) #Qualify the file with its full path.
-    }
-    
-    if( verbose )
-      message("Preparing to save the file to `", file_path, "`.")
-    
-		#This is the second of two important lines in the function.
-		#  It persists/converts the information in RAM to a file.
-		writeBin(httr::content(result, as="raw"), con=file_path)
-    
-		outcome_message <- paste0(result_header, " successfully downloaded in " ,
-								  round(elapsed_seconds, 2), " seconds, and saved as ", file_path)
-		recordsAffectedCount <- 0
+		outcome_message <- paste0("file uploaded to REDCap in ", 
+								  round(elapsed_seconds, 1), " seconds.")
+		recordsAffectedCount <- 1
 		record_id <- record
 		raw_text <- ""
 	} 
-	else { #If the operation was unsuccesful, then...
-		outcome_message <- paste0("file NOT not downloaded ")
-		recordsAffectedCount <- 0
-		record_id <- numeric(0) #Return an empty vector.
+	else { #If the returned content wasn't recognized as valid IDs, then
 		raw_text <- httr::content(result, type="text")
+		outcome_message <- paste0("file NOT uploaded ")
+		recordsAffectedCount <- 0L
+		record_id <- numeric(0) #Return an empty vector.
 	}
-  
 	if( verbose ) 
 		message(outcome_message)
 	
