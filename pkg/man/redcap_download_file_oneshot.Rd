@@ -68,7 +68,7 @@ REDCap is used (which is the default). }
 \description{
 This function uses REDCap's
 \href{https://iwg.devguard.com/trac/redcap/wiki/ApiExamples}{API}
-to upload a file
+to download a file
 }
 \details{
 The `REDCapR' package includes a recent version of the
