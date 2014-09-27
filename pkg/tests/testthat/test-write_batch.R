@@ -3,7 +3,8 @@ library(testthat)
 ###########
 context("WriteBatch")
 ###########
-test_that("Smoke Test", {  
+test_that("Smoke Test", {
+  testthat::skip_on_cran()
   start_clean_result <- REDCapR:::clean_start_simple(batch=TRUE)
   project <- start_clean_result$redcap_project
 })
@@ -51,7 +52,8 @@ test_that("Write Batch -Insert", {
   expect_true(returned_object$success)
 })
 
-test_that("Write Batch -Update One Field", {  
+test_that("Write Batch -Update One Field", {
+  testthat::skip_on_cran()
   start_clean_result <- REDCapR:::clean_start_simple(batch=TRUE)
   project <- start_clean_result$redcap_project
   
@@ -104,7 +106,8 @@ test_that("Write Batch -Update One Field", {
   expect_true(returned_object2$success)
 })
 
-test_that("Write Batch -Update Two Fields", {  
+test_that("Write Batch -Update Two Fields", {
+  testthat::skip_on_cran()
   start_clean_result <- REDCapR:::clean_start_simple(batch=TRUE)
   project <- start_clean_result$redcap_project
   
