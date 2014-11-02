@@ -1,5 +1,16 @@
-Version 0.5 (Developed 2014-09-20 through ?)
+Version 0.6 (Developed 2014-10-29 through ?)
 ------------------------------------------------------------------------------
+New Features: 
+* The `config_options` in the `httr` package are exposed to the REDCapR user.  See issues #55 & #58; thanks to @rparrish and @nutterb for their contributions (https://github.com/OuhscBbmc/REDCapR/issues/55 & https://github.com/OuhscBbmc/REDCapR/issues/58).
+
+Version 0.5 (Developed 2014-09-20 through 2014-10-19)
+------------------------------------------------------------------------------
+New Features: 
+* `redcap_metadata_read` are tested and public.
+
+Minor Updates:
+* Test suite now uses `testthat::skip_on_cran()` before any call involving OUHSC's REDCap server.
+* Vignette example of subsetting, conditioned on a 2nd variable's value.
 
 Version 0.4 (Developed 2014-09-01 through 2014-09-20)
 ------------------------------------------------------------------------------
